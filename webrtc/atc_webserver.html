@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<title>ATC WebRTC Testbed: Conferencing Test</title>
+	<script type="text/javascript"
+		src="https://cdnjs.cloudflare.com/ajax/libs/webrtc-adapter/8.2.2/adapter.min.js"></script>
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+	<script type="text/javascript"
+		src="https://cdnjs.cloudflare.com/ajax/libs/jquery.blockUI/2.70/jquery.blockUI.min.js"></script>
+	<script type="text/javascript"
+		src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js"></script>
+	<script type="text/javascript"
+		src="https://cdnjs.cloudflare.com/ajax/libs/bootbox.js/5.4.0/bootbox.min.js"></script>
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/spin.js/2.3.2/spin.min.js"></script>
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.1.4/toastr.min.js"></script>
+	<script type="text/javascript" src="settings.js"></script>
+	<script type="text/javascript" src="janus.js"></script>
+	<script type="text/javascript" src="atc_webserver.js"></script>
+	<!-- <script>
+	$(function() {
+		$(".navbar-static-top").load("navbar.html", function() {
+			$(".navbar-static-top li.dropdown").addClass("active");
+			$(".navbar-static-top a[href='videoroomtest.html']").parent().addClass("active");
+		});
+		$(".footer").load("footer.html");
+	});
+</script> -->
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.4.0/cerulean/bootstrap.min.css"
+		type="text/css" />
+	<link rel="stylesheet" href="css/demo.css" type="text/css" />
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.1.4/toastr.min.css" />
+</head>
+
+<body>
+
+	<nav class="navbar navbar-default navbar-static-top">
+	</nav>
+
+	<div class="container">
+		<div class="row">
+			<div class="col-md-8">
+				<div class="page-header">
+					<h1>ATC Testbed: Remote medicine service
+						<button class="btn btn-default" autocomplete="off" id="start">Start</button>
+					</h1>
+				</div>
+				<div class="container" id="details">
+					<div class="row">
+						<div class="col-md-8">
+							<h3>Waiting Room</h3>
+							<p>Press the <code>Start</code>
+						</div>
+					</div>
+				</div>
+				<div class="container hide" id="videojoin">
+					<div class="row">
+						<span class="label label-info" id="you"></span>
+						<div class="col-md-8" id="controls">
+							<div class="input-group margin-bottom-md hide" id="registernow">
+								<span class="input-group-addon">@</span>
+								<input autocomplete="off" class="form-control" type="text"
+									placeholder="Choose a display name" id="username" />
+								<span class="input-group-btn">
+									<button class="btn btn-success" autocomplete="off" id="register">Join the
+										room</button>
+								</span>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="container hide" id="videos">
+					<div class="row">
+						<div class="col-md-4">
+							<div class="panel panel-default">
+								<div class="panel-heading">
+									<h3 class="panel-title">Local Video <span class="label label-primary hide"
+											id="publisher"></span>
+										<div class="btn-group btn-group-xs pull-right hide">
+											<div class="btn-group btn-group-xs labal-id">
+												<button id="bitrateset" autocomplete="off"
+													class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
+													Bandwidth<span class="caret"></span>
+												</button>
+												<ul id="bitrate" class="dropdown-menu" role="menu">
+													<li><a href="#" id="0">No limit</a></li>
+													<li><a href="#" id="128">Cap to 128kbit</a></li>
+													<li><a href="#" id="256">Cap to 256kbit</a></li>
+													<li><a href="#" id="512">Cap to 512kbit</a></li>
+													<li><a href="#" id="1024">Cap to 1mbit</a></li>
+													<li><a href="#" id="1500">Cap to 1.5mbit</a></li>
+													<li><a href="#" id="2000">Cap to 2mbit</a></li>
+													<li><a href="#" id="2500">Cap to 2.5mbit</a></li>
+													<li><a href="#" id="3000">Cap to 3mbit</a></li>
+												</ul>
+											</div>
+										</div>
+									</h3>
+								</div>
+								<div class="panel-body" id="videolocal"></div>
+							</div>
+						</div>
+						<div class="col-md-4">
+							<div class="panel panel-default">
+								<div class="panel-heading">
+									<h3 class="panel-title">Remote Video <span class="label label-info hide"
+											id="remote1"></span></h3>
+								</div>
+								<div class="panel-body relative" id="videoremote1"></div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="container hide" id="na">
+					<hr class="col-md-8">
+					<div class="row">
+						<span class="label label-info" id="na-label"></span>
+						<div class="col-md-8" id="network-analyzer">
+							<div class="input-group margin-bottom-md" id="naip-now">
+								<span class="input-group-addon">Network Analyzer</span>
+								<input autocomplete="off" class="form-control" type="text" placeholder="Insert Network analyzer address" id="naip" value="192.168.34.22" />
+								<span class="input-group-btn">
+									<button class="btn btn-primary" autocomplete="off" id="naip-btn">Send</button>
+								</span>
+							</div>
+						</div>
+					</div>
+				</div>
+
+			</div>
+		</div>
+		<hr>
+	</div>
+	</div>
+
+
+</body>
+
+</html>

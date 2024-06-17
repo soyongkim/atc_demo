@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<title>ATC Network Analyzer</title>
+	<script type="text/javascript" src="main.js"></script>
+	<script type="text/javascript"
+		src="https://cdnjs.cloudflare.com/ajax/libs/webrtc-adapter/6.0.3/adapter.min.js"></script>
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<script type="text/javascript"
+		src="https://cdnjs.cloudflare.com/ajax/libs/jquery.blockUI/2.70/jquery.blockUI.min.js"></script>
+	<script type="text/javascript"
+		src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.0.2/js/bootstrap.min.js"></script>
+	<script type="text/javascript"
+		src="https://cdnjs.cloudflare.com/ajax/libs/bootbox.js/4.1.0/bootbox.min.js"></script>
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/spin.js/2.3.2/spin.min.js"></script>
+	<script type="text/javascript"
+		src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.bundle.min.js"></script>
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js"></script>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.7/cerulean/bootstrap.min.css"
+		type="text/css" />
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.2/css/font-awesome.min.css"
+		type="text/css" />
+</head>
+
+<body>
+	<nav class="navbar navbar-default navbar-static-top">
+	</nav>
+	<div class="container">
+		<div class="row">
+			<div class="col-md-12">
+				<div class="page-header">
+					<h1>ATC Network Analyzer - Dashboard</h1>
+				</div>
+				<div class="container" id="details">
+					<div class="row">
+						<div class="col-md-12">
+							<div class="panel panel-default">
+								<div class="panel-heading">
+									<h3 class="panel-title">User <span class="label label-info hide" id="user-1"></span>
+									</h3>
+								</div>
+								<div class="panel-body relative" id="user_metrics-1">
+									<div class="col-md-4">
+										<p>Peer: <span id="peer_id-1"></span></p>
+										<p>Round trip time: <span id="rtt-1"></span>ms</p>
+										<p>Packet loss: <span id="packet_loss-1"></span>%</p>
+										<p>Throughput: <span id="throughput-1"></span> kbits/sec</p>
+										<p>Jitter: <span id="jitter-1"></span></p>
+										<p>Framerate: <span id="framerate-1"></span>fps</p>
+										<p>Resolution: <span id="resolution-1"></span>p</p>
+										<canvas id="meter" width=150 height=150
+											style="position:absolute; top: 15px; right: 15px">
+									</div>
+									<div class="col-md-8">
+										<canvas id="user_chart-1"></canvas>
+									</div>
+								</div>
+								<button onclick="request_cumulated_metrics(1)">Request Data</button>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-md-12">
+							<div class="panel panel-default">
+								<div class="panel-heading">
+									<h3 class="panel-title">User <span class="label label-info hide" id="user-2"></span>
+									</h3>
+								</div>
+								<div class="panel-body relative" id="user_metrics-2">
+									<div class="col-md-4">
+										<p>Peer: <span id="peer_id-2"></span></p>
+										<p>Round trip time: <span id="rtt-2"></span>ms</p>
+										<p>Packet loss: <span id="packet_loss-2"></span>%</p>
+										<p>Throughput: <span id="throughput-2"></span> kbits/sec</p>
+										<p>Jitter: <span id="jitter-2"></span></p>
+										<p>Framerate: <span id="framerate-2"></span>fps</p>
+										<p>Resolution: <span id="resolution-2"></span>p</p>
+										<canvas id="meter" width=150 height=150
+											style="position:absolute; top: 15px; right: 15px">
+									</div>
+									<div class="col-md-8">
+										<canvas id="user_chart-2"></canvas>
+									</div>
+								</div>
+								<button onclick="request_cumulated_metrics(2)">Request Data</button>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="panel panel-default">
+							<div class="panel-heading" style="display: flex; justify-content: space-between; align-items: center;">
+								<h3 class="panel-title">Mobius</h3>
+								<div style="display: flex; align-items: center;">
+									<span>Rounded trip time: <span id="mobius_rtt"></span> ms</span>
+									<span style="padding-left: 20px;">Packet loss: <span id="mobius_loss"></span>%</span>
+									<button onclick="get_mobius_metrics()" style="margin-left: 20px; color: black; background-color: white;">Request Data</button>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-md-12"></div>	
+		</div>
+	</div>
+	</div>
+</body>
