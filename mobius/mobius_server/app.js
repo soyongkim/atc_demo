@@ -1776,54 +1776,16 @@ app.use((req, res, next) => {
 app.use(express.json());
 
 // [SD] ATC Network Performance Measurement
-let requestCount = 0;
-let startTime = null;
-let totalBytesTransferred = 0;
-app.post('/atc-network', (req, res) => {
-    // if (startTime === null) {
-    //     startTime = Date.now();
-    // }
-    requestCount++;
-
-    //console.log('Before parsing', req.body);
+// [SD] ATC Network Performance Measurement
+app.post('/ping', (req, res) => {
     const conValue = req.body['m2m:cin']?.con;
-    //console.log('Parsed con value:', conValue);
-
     const clientTimestamp = conValue?.timestamp;
     const serverTimestamp = Date.now();
-    // const payload = 'x'.repeat(1024);
-    //console.log(`Client Timestamp: ${clientTimestamp}, Server Timestamp: ${serverTimestamp}`);
+  
+    //console.log(`Received ping. Client timestamp: ${clientTimestamp} ms, Server timestamp: ${serverTimestamp} ms`);
+    res.send(JSON.stringify({ serverTimestamp: serverTimestamp, clientTimestampEcho: clientTimestamp }));
+  });
 
-    //const requestSize = JSON.stringify(req.body).length; // 요청 본문의 크기
-    //const responseSize = JSON.stringify({ serverTimestamp: serverTimestamp }).length; // 응답 본문의 크기
-
-    // const requestSize = Buffer.byteLength(JSON.stringify(req.body)) + getHeadersSize(req.headers); // 요청 본문의 크기
-    // const responseSize = Buffer.byteLength(JSON.stringify({ serverTimestamp: serverTimestamp, payload: payload })) + getHeadersSize(res.getHeaders()); // 응답 본문의 크기
-
-
-    // totalBytesTransferred += requestSize + responseSize;
-
-    // Throughput 계산
-    //const currentTime = Date.now();
-    //const duration = (currentTime - startTime) / 1000; // duration in seconds
-    //const throughput = (totalBytesTransferred * 8) / duration / 1000; // kbps
-
-    //console.log(`One way Delay: ${serverTimestamp-clientTimestamp} ms / Throughput: ${throughput} kbps`);
-    
-    //console.log(`One way Delay: ${serverTimestamp-clientTimestamp} ms`);
-
-    res.set('Connection', 'keep-alive');
-    //res.json({ serverTimestamp: serverTimestamp, throughput: throughput });
-    res.json({ serverTimestamp: serverTimestamp });
-});
-
-// function getHeadersSize(headers) {
-//     let size = 0;
-//     for (const key in headers) {
-//       size += key.length + headers[key].length + 4; // 4는 ': '와 '\r\n'의 길이
-//     }
-//     return size;
-//   }
 
 
 // remoteCSE, ae, cnt

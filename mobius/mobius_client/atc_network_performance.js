@@ -1,5 +1,6 @@
 const http = require('http');
 const https = require('https');
+const { start } = require('repl');
 var shortid = require('shortid');
 
 let successfulRequests = 0;
@@ -11,7 +12,7 @@ let interval;
 const options = {
   hostname: conf.cse.host,
   port: conf.cse.port,
-  path: '/atc-network',
+  path: '/ping',
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
@@ -33,18 +34,20 @@ const options_normal = {
   }
 };
 
+const agent = new http.Agent({ keepAlive: true });
 
+let sentPackets = 0;
+let receivedPackets = 0;
 const sendRequestOnem2mFormat = () => {
-  const clientTimestamp = Date.now();
-  const payload = 'x'.repeat(1024);
-
   var results_ci = {};
   var bodyString = '';
 
+  sentPackets++;
+  const startTime = Date.now();
+
   results_ci['m2m:cin'] = {};
   results_ci['m2m:cin'].con = {
-    'timestamp': clientTimestamp,
-    'payload': payload
+    'timestamp': startTime,
   };
 
   bodyString = JSON.stringify(results_ci);
@@ -53,78 +56,42 @@ const sendRequestOnem2mFormat = () => {
     options.headers['Content-Length'] = bodyString.length;
   }
 
-  // var a = '; ty=4';
-  // options.headers['Content-Type'] = 'application/vnd.onem2m-res+' + conf.ae.bodytype + a;
-
-  const req = http.request(options, (res) => {
+  const req = http.request({ ...options, agent }, (res) => {
     let data = '';
-    var rtt = 0;
-
+    res.setEncoding('utf8');
     res.on('data', (chunk) => {
       data += chunk;
     });
 
     res.on('end', () => {
-      try {
-        const response = JSON.parse(data);
-        const serverTimestamp = response.serverTimestamp;
-        const clientEndTimestamp = Date.now();
-        //const throughput = response.throughput;
+      const clientEndTimestamp = Date.now();
+      const response = JSON.parse(data);
+      const serverTimestamp = response.serverTimestamp;
+      const clientTimestampEcho = response.clientTimestampEcho;
 
-        console.log(`Client Start Timestamp: ${clientTimestamp}`);
-        console.log(`Server Timestamp: ${serverTimestamp}`);
-        console.log(`Client End Timestamp: ${clientEndTimestamp}`);
-        console.log(`One-way delay (Client to Server): ${serverTimestamp - clientTimestamp} ms`);
-        rtt = clientEndTimestamp - clientTimestamp;
-        //console.log(`Round-trip delay: ${clientEndTimestamp - clientTimestamp} ms`);
-        //console.log(`Throughput: ${throughput} kbps`);
+      // Calculate the offset between client and server time
+      const clientToServerRTT = serverTimestamp - clientTimestampEcho;
+      const serverToClientRTT = clientEndTimestamp - serverTimestamp;
+      const rtt = clientToServerRTT + serverToClientRTT;
 
-        successfulRequests++;
-      } catch (error) {
-        console.error('Error parsing response:', error);
-        failedRequests++;
-      }
+      receivedPackets++;
+      //console.log(`StartTime: ${startTime} ms / serverTimestamp: ${serverTimestamp} ms / clientEndTimestamp: ${clientEndTimestamp} ms`);
+      //console.log(`RTT: ${rtt} ms / Test RTT: ${clientEndTimestamp - startTime} ms`);
 
-      totalRequests++;
-      const lossRate = (failedRequests / totalRequests) * 100; // percentage
-
-      console.log(`Total Requests: ${totalRequests}`);
-      console.log(`Successful Requests: ${successfulRequests}`);
-      console.log(`Failed Requests: ${failedRequests}`);
-      console.log(`Loss Rate: ${lossRate}%`);
-
-      //console.log("na address: ", na_ipaddress);
-      sendnetworkmetrics(rtt, lossRate);
-
-      if (totalRequests >= NUM_REQUESTS) {
-        console.log('Test completed.');
-        clearInterval(interval);
-      }
+      const packetLoss = ((sentPackets - receivedPackets) / sentPackets) * 100;
+      //console.log(`Packet Loss: ${packetLoss.toFixed(2)}%`);
+      sendnetworkmetrics(rtt, packetLoss);
     });
   });
 
-  req.on('error', (error) => {
-    console.error('Request error:', error);
-    failedRequests++;
-    totalRequests++;
-    const lossRate = (failedRequests / totalRequests) * 100; // percentage
-
-    console.log(`Total Requests: ${totalRequests}`);
-    console.log(`Successful Requests: ${successfulRequests}`);
-    console.log(`Failed Requests: ${failedRequests}`);
-    console.log(`Loss Rate: ${lossRate}%`);
-
-    if (totalRequests >= NUM_REQUESTS) {
-      console.log('Test completed.');
-      clearInterval(interval);
-    }
+  req.on('error', (err) => {
+    console.log(`Error: ${err.message}`);
   });
 
-
-  console.log(bodyString);
   req.write(bodyString);
   req.end();
-};
+}
+
 
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
@@ -162,71 +129,71 @@ function sendnetworkmetrics(rtt, loss) {
 }
 
 
-const sendRequest = () => {
-  const clientTimestamp = Date.now();
+// const sendRequest = () => {
+//   const clientTimestamp = Date.now();
 
-  const req = http.request(options, (res) => {
-    let data = '';
+//   const req = http.request(options, (res) => {
+//     let data = '';
 
-    res.on('data', (chunk) => {
-      data += chunk;
-    });
+//     res.on('data', (chunk) => {
+//       data += chunk;
+//     });
 
-    res.on('end', () => {
-      try {
-        const response = JSON.parse(data);
-        const serverTimestamp = response.serverTimestamp;
-        const clientEndTimestamp = Date.now();
-        const throughput = response.throughput;
+//     res.on('end', () => {
+//       try {
+//         const response = JSON.parse(data);
+//         const serverTimestamp = response.serverTimestamp;
+//         const clientEndTimestamp = Date.now();
+//         const throughput = response.throughput;
 
-        console.log(`Client Start Timestamp: ${clientTimestamp}`);
-        console.log(`Server Timestamp: ${serverTimestamp}`);
-        console.log(`Client End Timestamp: ${clientEndTimestamp}`);
-        console.log(`One-way delay (Client to Server): ${serverTimestamp - clientTimestamp} ms`);
-        console.log(`Round-trip delay: ${clientEndTimestamp - clientTimestamp} ms`);
-        console.log(`Throughput: ${throughput} kbps`);
+//         console.log(`Client Start Timestamp: ${clientTimestamp}`);
+//         console.log(`Server Timestamp: ${serverTimestamp}`);
+//         console.log(`Client End Timestamp: ${clientEndTimestamp}`);
+//         console.log(`One-way delay (Client to Server): ${serverTimestamp - clientTimestamp} ms`);
+//         console.log(`Round-trip delay: ${clientEndTimestamp - clientTimestamp} ms`);
+//         console.log(`Throughput: ${throughput} kbps`);
 
-        successfulRequests++;
-      } catch (error) {
-        console.error('Error parsing response:', error);
-        failedRequests++;
-      }
+//         successfulRequests++;
+//       } catch (error) {
+//         console.error('Error parsing response:', error);
+//         failedRequests++;
+//       }
 
-      totalRequests++;
-      const lossRate = (failedRequests / totalRequests) * 100; // percentage
+//       totalRequests++;
+//       const lossRate = (failedRequests / totalRequests) * 100; // percentage
 
-      console.log(`Total Requests: ${totalRequests}`);
-      console.log(`Successful Requests: ${successfulRequests}`);
-      console.log(`Failed Requests: ${failedRequests}`);
-      console.log(`Loss Rate: ${lossRate}%`);
+//       console.log(`Total Requests: ${totalRequests}`);
+//       console.log(`Successful Requests: ${successfulRequests}`);
+//       console.log(`Failed Requests: ${failedRequests}`);
+//       console.log(`Loss Rate: ${lossRate}%`);
 
-      if (totalRequests >= NUM_REQUESTS) {
-        console.log('Test completed.');
-        clearInterval(interval);
-      }
-    });
-  });
+//       if (totalRequests >= NUM_REQUESTS) {
+//         console.log('Test completed.');
+//         clearInterval(interval);
+//       }
+//     });
+//   });
 
-  req.on('error', (error) => {
-    console.error('Request error:', error);
-    failedRequests++;
-    totalRequests++;
-    const lossRate = (failedRequests / totalRequests) * 100; // percentage
+//   req.on('error', (error) => {
+//     console.error('Request error:', error);
+//     failedRequests++;
+//     totalRequests++;
+//     const lossRate = (failedRequests / totalRequests) * 100; // percentage
 
-    console.log(`Total Requests: ${totalRequests}`);
-    console.log(`Successful Requests: ${successfulRequests}`);
-    console.log(`Failed Requests: ${failedRequests}`);
-    console.log(`Loss Rate: ${lossRate}%`);
+//     console.log(`Total Requests: ${totalRequests}`);
+//     console.log(`Successful Requests: ${successfulRequests}`);
+//     console.log(`Failed Requests: ${failedRequests}`);
+//     console.log(`Loss Rate: ${lossRate}%`);
 
-    if (totalRequests >= NUM_REQUESTS) {
-      console.log('Test completed.');
-      clearInterval(interval);
-    }
-  });
+//     if (totalRequests >= NUM_REQUESTS) {
+//       console.log('Test completed.');
+//       clearInterval(interval);
+//     }
+//   });
 
-  req.write(JSON.stringify({ timestamp: clientTimestamp }));
-  req.end();
-};
+//   req.write(JSON.stringify({ timestamp: clientTimestamp }));
+//   req.end();
+// };
 
 const atc_iot_device_action = (period) => {
   interval = setInterval(sendRequestOnem2mFormat, period);
